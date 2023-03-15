@@ -1,21 +1,26 @@
 import { createContext, useReducer } from "react";
-import questions from '../data'
-import { shuffleAnswers } from "../helpers";
+import { normalizeQuestions, shuffleAnswers } from "../helpers";
 
 const initialState = {
-  questions,
+  questions: [],
   currentQuestionIndex: 0,
   showResults: false,
-  answers: shuffleAnswers(questions[0]),
-  currentAnswer: ''
+  answers: [],
+  currentAnswer: '',
+  correctAnswersCount: 0,
 };
 
 const reducer = (state, action) => {
   switch(action.type) {
     case 'SELECT_ANSWER': {
+      const correctAnswersCount = 
+        action.payload === state.questions[state.currentQuestionIndex].correctAnswer 
+          ? state.correctAnswersCount + 1 
+          : state.correctAnswersCount;
       return {
         ...state,
         currentAnswer: action.payload,
+        correctAnswersCount,
       };
     }
     case 'NEXT_QUESTION': {
@@ -31,10 +36,19 @@ const reducer = (state, action) => {
         currentQuestionIndex,
         showResults,
         answers,
+        currentAnswer: '',
       };
     }
     case 'RESTART': {
       return initialState;
+    }
+    case 'LOADED_QUESTIONS': {
+      const normalizedQuestions = normalizeQuestions(action.payload);
+      return {
+        ...state,
+        questions: normalizedQuestions,
+        answers: shuffleAnswers(normalizedQuestions[0]),
+      };
     }
     default: {
       return state;
